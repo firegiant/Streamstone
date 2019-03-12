@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Runtime.ExceptionServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.WindowsAzure.Storage;
@@ -26,13 +27,13 @@ namespace Streamstone
                 table = stream.Partition.Table;
             }
 
-            public async Task<Stream> ExecuteAsync()
+            public async Task<Stream> ExecuteAsync(CancellationToken cancellationToken)
             {
                 var insert = new Insert(stream);
 
                 try
                 {
-                    await table.ExecuteAsync(insert.Prepare()).ConfigureAwait(false);
+                    await table.ExecuteAsync(insert.Prepare(), null, null, cancellationToken).ConfigureAwait(false);
                 }
                 catch (StorageException e)
                 {
@@ -84,7 +85,7 @@ namespace Streamstone
                 table = stream.Partition.Table;
             }
 
-            public async Task<StreamWriteResult> ExecuteAsync()
+            public async Task<StreamWriteResult> ExecuteAsync(CancellationToken cancellationToken)
             {
                 var current = stream;
 
@@ -94,7 +95,7 @@ namespace Streamstone
 
                     try
                     {
-                        await table.ExecuteBatchAsync(batch.Prepare()).ConfigureAwait(false);
+                        await table.ExecuteBatchAsync(batch.Prepare(), null, null, cancellationToken).ConfigureAwait(false);
                     }
                     catch (StorageException e)
                     {
@@ -297,13 +298,13 @@ namespace Streamstone
                 table = stream.Partition.Table;
             }
 
-            public async Task<Stream> ExecuteAsync()
+            public async Task<Stream> ExecuteAsync(CancellationToken cancellationToken)
             {
                 var replace = new Replace(stream, properties);
 
                 try
                 {
-                    await table.ExecuteAsync(replace.Prepare()).ConfigureAwait(false);
+                    await table.ExecuteAsync(replace.Prepare(), null, null, cancellationToken).ConfigureAwait(false);
                 }
                 catch (StorageException e)
                 {
@@ -353,8 +354,8 @@ namespace Streamstone
                 table = partition.Table;
             }
 
-            public async Task<StreamOpenResult> ExecuteAsync() => 
-                Result(await table.ExecuteAsync(Prepare()));
+            public async Task<StreamOpenResult> ExecuteAsync(CancellationToken cancellationToken) => 
+                Result(await table.ExecuteAsync(Prepare(), null, null, cancellationToken));
 
             TableOperation Prepare() => TableOperation.Retrieve<StreamEntity>(partition.PartitionKey, partition.StreamRowKey());
 
@@ -384,8 +385,8 @@ namespace Streamstone
                 table = partition.Table;
             }
 
-            public async Task<StreamSlice<T>> ExecuteAsync(Func<DynamicTableEntity, T> transform) => 
-                Result(await ExecuteQueryAsync(PrepareQuery()), transform);
+            public async Task<StreamSlice<T>> ExecuteAsync(Func<DynamicTableEntity, T> transform, CancellationToken cancellationToken) => 
+                Result(await ExecuteQueryAsync(PrepareQuery(), cancellationToken), transform);
 
             StreamSlice<T> Result(ICollection<DynamicTableEntity> entities, Func<DynamicTableEntity, T> transform)
             {
@@ -420,14 +421,14 @@ namespace Streamstone
                 return new TableQuery<DynamicTableEntity>().Where(filter);
             }
 
-            async Task<List<DynamicTableEntity>> ExecuteQueryAsync(TableQuery<DynamicTableEntity> query)
+            async Task<List<DynamicTableEntity>> ExecuteQueryAsync(TableQuery<DynamicTableEntity> query, CancellationToken cancellationToken)
             {
                 var result = new List<DynamicTableEntity>();
                 TableContinuationToken token = null;
 
                 do
                 {
-                    var segment = await table.ExecuteQuerySegmentedAsync(query, token).ConfigureAwait(false);
+                    var segment = await table.ExecuteQuerySegmentedAsync(query, token, null, null, cancellationToken).ConfigureAwait(false);
                     token = segment.ContinuationToken;
                     result.AddRange(segment.Results);
                 }

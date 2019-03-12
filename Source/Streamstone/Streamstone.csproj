@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>Streamstone</PackageId>
+    <PackageId>FireGiant.Streamstone</PackageId>
     <Title>Streamstone core library</Title>
     <Description>Streamstone is a lightweight library which implements a low-level mechanics of Event Store on top of Windows Azure Table Storage. Handles concurrency conflicts via optimistic locking. Supports custom event and stream metadata. Optimized for batch processing.</Description>
   </PropertyGroup>

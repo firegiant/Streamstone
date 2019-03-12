@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.WindowsAzure.Storage;
@@ -14,6 +15,7 @@ namespace Streamstone
         /// Initiates an asynchronous operation that provisions new stream in the specified partition.
         /// </summary>
         /// <param name="partition">The partition.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>The promise, that wil eventually return stream header or will fail with exception</returns>
         /// <exception cref="ArgumentNullException">
         ///     If <paramref name="partition"/> is <c>null</c>
@@ -21,9 +23,9 @@ namespace Streamstone
         /// <exception cref="ConcurrencyConflictException">
         ///     If stream already exists in the partition
         /// </exception>
-        public static Task<Stream> ProvisionAsync(Partition partition)
+        public static Task<Stream> ProvisionAsync(Partition partition, CancellationToken cancellationToken = default)
         {
-            return ProvisionAsync(new Stream(partition));
+            return ProvisionAsync(new Stream(partition), cancellationToken);
         }
 
         /// <summary>
@@ -31,6 +33,7 @@ namespace Streamstone
         /// </summary>
         /// <param name="partition">The partition.</param>
         /// <param name="properties">The stream properties</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>The promise, that wil eventually return stream header or will fail with exception</returns>
         /// <exception cref="ArgumentNullException">
         ///     If <paramref name="partition"/> is <c>null</c>
@@ -41,15 +44,16 @@ namespace Streamstone
         /// <exception cref="ConcurrencyConflictException">
         /// If stream already exists in the partition
         /// </exception>        
-        public static Task<Stream> ProvisionAsync(Partition partition, StreamProperties properties)
+        public static Task<Stream> ProvisionAsync(Partition partition, StreamProperties properties, CancellationToken cancellationToken = default)
         {
-            return ProvisionAsync(new Stream(partition, properties));
+            return ProvisionAsync(new Stream(partition, properties), cancellationToken);
         }
 
         /// <summary>
         /// Initiates an asynchronous operation that provisions specified stream.
         /// </summary>
         /// <param name="stream">The transient stream header.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The promise, that wil eventually return updated, persistent stream header or will fail with exception</returns>
         /// <exception cref="ArgumentNullException">
         ///     If <paramref name="stream"/> is <c>null</c>
@@ -57,10 +61,10 @@ namespace Streamstone
         /// <exception cref="ConcurrencyConflictException">
         ///     If stream already exists in the partition
         /// </exception>
-        static Task<Stream> ProvisionAsync(Stream stream)
+        private static Task<Stream> ProvisionAsync(Stream stream, CancellationToken cancellationToken)
         {
             Requires.NotNull(stream, nameof(stream));
-            return new ProvisionOperation(stream).ExecuteAsync();
+            return new ProvisionOperation(stream).ExecuteAsync(cancellationToken);
         }
 
         /// <summary>
@@ -90,15 +94,17 @@ namespace Streamstone
         /// <exception cref="ConcurrencyConflictException">
         ///     If write operation has conflicts
         /// </exception>
-        public static Task<StreamWriteResult> WriteAsync(Stream stream, params EventData[] events) => 
-            WriteAsync(stream, StreamWriteOptions.Default, events);
+        public static Task<StreamWriteResult> WriteAsync(Stream stream, params EventData[] events)
+        {
+            return WriteAsync(stream, StreamWriteOptions.Default, events, CancellationToken.None);
+        }
 
         /// <summary>
         /// Initiates an asynchronous operation that writes the given array of events to a stream using specified stream header.
         /// </summary>
         /// <param name="stream">The stream header.</param>
-        /// <param name="options">The stream write options.</param>
         /// <param name="events">The events to write.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>
         ///     The promise, that wil eventually return the result of the stream write operation 
         ///     containing updated stream header or will fail with exception
@@ -121,16 +127,52 @@ namespace Streamstone
         /// <exception cref="ConcurrencyConflictException">
         ///     If write operation has conflicts
         /// </exception>
-        public static Task<StreamWriteResult> WriteAsync(Stream stream, StreamWriteOptions options, params EventData[] events)
+        public static Task<StreamWriteResult> WriteAsync(Stream stream, IEnumerable<EventData> events, CancellationToken cancellationToken = default)
         {
-            Requires.NotNull(stream,  nameof(stream));
+            return WriteAsync(stream, StreamWriteOptions.Default, events, cancellationToken);
+        }
+
+        /// <summary>
+        /// Initiates an asynchronous operation that writes the given array of events to a stream using specified stream header.
+        /// </summary>
+        /// <param name="stream">The stream header.</param>
+        /// <param name="options">The stream write options.</param>
+        /// <param name="events">The events to write.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        /// <returns>
+        ///     The promise, that wil eventually return the result of the stream write operation 
+        ///     containing updated stream header or will fail with exception
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///     If <paramref name="stream"/> is <c>null</c>
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        ///     If <paramref name="events"/> is <c>null</c>
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///    If <paramref name="events"/> array is empty
+        /// </exception>
+        /// <exception cref="DuplicateEventException">
+        ///     If event with the given id already exists in a storage
+        /// </exception>
+        /// <exception cref="IncludedOperationConflictException">
+        ///     If included entity operation has conflicts
+        /// </exception>
+        /// <exception cref="ConcurrencyConflictException">
+        ///     If write operation has conflicts
+        /// </exception>
+        public static Task<StreamWriteResult> WriteAsync(Stream stream, StreamWriteOptions options, IEnumerable<EventData> events, CancellationToken cancellationToken = default)
+        {
+            Requires.NotNull(stream, nameof(stream));
             Requires.NotNull(options, nameof(options));
-            Requires.NotNull(events,  nameof(events));
+            Requires.NotNull(events, nameof(events));
 
-            if (events.Length == 0)
+            if (!events.Any())
+            {
                 throw new ArgumentOutOfRangeException("events", "Events have 0 items");
+            }
 
-            return new WriteOperation(stream, options, events).ExecuteAsync();
+            return new WriteOperation(stream, options, events).ExecuteAsync(cancellationToken);
         }
 
         /// <summary>
@@ -166,17 +208,17 @@ namespace Streamstone
         /// </exception>
         public static async Task<StreamWriteResult> WriteAsync(Partition partition, int expectedVersion, params EventData[] events)
         {
-            return await WriteAsync(partition, StreamWriteOptions.Default, expectedVersion, events);
-        } 
-        
+            return await WriteAsync(partition, StreamWriteOptions.Default, expectedVersion, events, CancellationToken.None);
+        }
+
         /// <summary>
         /// Initiates an asynchronous operation that writes the given array of events to a partition using specified expected version.
         /// </summary>
         /// <remarks>For new stream specify expected version as 0</remarks>
         /// <param name="partition">The partition.</param>
-        /// <param name="options">The stream write options.</param>
         /// <param name="expectedVersion">The expected version of the stream.</param>
         /// <param name="events">The events to write.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>
         ///     The result of the stream write operation containing updated stream header
         /// </returns>
@@ -201,7 +243,45 @@ namespace Streamstone
         /// <exception cref="ConcurrencyConflictException">
         ///     If write operation has conflicts
         /// </exception>
-        public static async Task<StreamWriteResult> WriteAsync(Partition partition, StreamWriteOptions options, int expectedVersion, params EventData[] events)
+        public static async Task<StreamWriteResult> WriteAsync(Partition partition, int expectedVersion, IEnumerable<EventData> events, CancellationToken cancellationToken = default)
+        {
+            return await WriteAsync(partition, StreamWriteOptions.Default, expectedVersion, events, cancellationToken);
+        }
+
+        /// <summary>
+        /// Initiates an asynchronous operation that writes the given array of events to a partition using specified expected version.
+        /// </summary>
+        /// <remarks>For new stream specify expected version as 0</remarks>
+        /// <param name="partition">The partition.</param>
+        /// <param name="options">The stream write options.</param>
+        /// <param name="expectedVersion">The expected version of the stream.</param>
+        /// <param name="events">The events to write.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        /// <returns>
+        ///     The result of the stream write operation containing updated stream header
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///     If <paramref name="partition"/> is <c>null</c>
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        ///     If <paramref name="events"/> is <c>null</c>
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///    If <paramref name="expectedVersion"/> is less than 0
+        /// </exception> 
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///    If <paramref name="events"/> array is empty
+        /// </exception>
+        /// <exception cref="DuplicateEventException">
+        ///     If event with the given id already exists in a storage
+        /// </exception>
+        /// <exception cref="IncludedOperationConflictException">
+        ///     If included entity operation has conflicts
+        /// </exception>
+        /// <exception cref="ConcurrencyConflictException">
+        ///     If write operation has conflicts
+        /// </exception>
+        public static async Task<StreamWriteResult> WriteAsync(Partition partition, StreamWriteOptions options, int expectedVersion, IEnumerable<EventData> events, CancellationToken cancellationToken = default)
         {
             Requires.NotNull(partition, nameof(partition));
             Requires.GreaterThanOrEqualToZero(expectedVersion, nameof(expectedVersion));
@@ -211,16 +291,19 @@ namespace Streamstone
                 : await OpenAsync(partition);
 
             if (stream.Version != expectedVersion)
+            {
                 throw ConcurrencyConflictException.StreamChangedOrExists(partition);
+            }
 
-            return await WriteAsync(stream, options, events);
+            return await WriteAsync(stream, options, events, cancellationToken);
         }
-        
+
         /// <summary>
         /// Initiates an asynchronous operation that sets the given stream properties (metadata).
         /// </summary>
         /// <param name="stream">The stream header.</param>
         /// <param name="properties">The properties.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>The promise, that wil eventually return updated stream header or will fail with exception</returns>
         /// <exception cref="ArgumentNullException">
         ///     If <paramref name="stream"/> is <c>null</c>
@@ -234,21 +317,24 @@ namespace Streamstone
         /// <exception cref="ConcurrencyConflictException">
         ///     If stream has been changed in storage after the given stream header has been read
         /// </exception>
-        public static Task<Stream> SetPropertiesAsync(Stream stream, StreamProperties properties)
+        public static Task<Stream> SetPropertiesAsync(Stream stream, StreamProperties properties, CancellationToken cancellationToken = default)
         {
             Requires.NotNull(stream, nameof(stream));
             Requires.NotNull(properties, nameof(properties));
 
             if (stream.IsTransient)
+            {
                 throw new ArgumentException("Can't set properties on transient stream", "stream");
+            }
 
-            return new SetPropertiesOperation(stream, properties).ExecuteAsync();
+            return new SetPropertiesOperation(stream, properties).ExecuteAsync(cancellationToken);
         }
 
         /// <summary>
         /// Initiates an asynchronous operation that opens the stream in specified partition. Basically, it just return a stream header.
         /// </summary>
         /// <param name="partition">The partition.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>
         ///     The promise, that wil eventually return the stream header or wil fail with exception
         /// </returns>
@@ -258,12 +344,14 @@ namespace Streamstone
         /// <exception cref="StreamNotFoundException">
         ///     If there is no stream in a given partition
         /// </exception>
-        public static async Task<Stream> OpenAsync(Partition partition)
+        public static async Task<Stream> OpenAsync(Partition partition, CancellationToken cancellationToken = default)
         {
-            var result = await TryOpenAsync(partition).ConfigureAwait(false);
+            var result = await TryOpenAsync(partition, cancellationToken).ConfigureAwait(false);
 
             if (result.Found)
+            {
                 return result.Stream;
+            }
 
             throw new StreamNotFoundException(partition);
         }
@@ -272,6 +360,7 @@ namespace Streamstone
         /// Initiates an asynchronous operation that tries to open the stream in a specified partition.
         /// </summary>
         /// <param name="partition">The partition.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>
         ///     The promise, that wil eventually return the result of stream open operation, 
         ///     which could be further examined for stream existence;  or wil fail with exception
@@ -279,17 +368,18 @@ namespace Streamstone
         /// <exception cref="ArgumentNullException">
         ///     If <paramref name="partition"/> is <c>null</c>
         /// </exception>
-        public static Task<StreamOpenResult> TryOpenAsync(Partition partition)
+        public static Task<StreamOpenResult> TryOpenAsync(Partition partition, CancellationToken cancellationToken = default)
         {
             Requires.NotNull(partition, nameof(partition));
 
-            return new OpenStreamOperation(partition).ExecuteAsync();
+            return new OpenStreamOperation(partition).ExecuteAsync(cancellationToken);
         }
 
         /// <summary>
         /// Initiates an asynchronous operation that checks if there is a stream exists in the specified partition.
         /// </summary>
         /// <param name="partition">The partition.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>
         ///     The promise, that wil eventually return <c>true</c>
         ///     if stream header was found in the specified partition,  <c>false</c> otherwise
@@ -297,12 +387,12 @@ namespace Streamstone
         /// <exception cref="ArgumentNullException">
         ///     If <paramref name="partition"/> is <c>null</c>
         /// </exception>
-        public static async Task<bool> ExistsAsync(Partition partition)
+        public static async Task<bool> ExistsAsync(Partition partition, CancellationToken cancellationToken = default)
         {
-            return (await TryOpenAsync(partition).ConfigureAwait(false)).Found;
+            return (await TryOpenAsync(partition, cancellationToken).ConfigureAwait(false)).Found;
         }
 
-        const int DefaultSliceSize = 1000;
+        private const int DefaultSliceSize = 1000;
 
         /// <summary>
         /// Initiates an asynchronous operation that reads the events from a stream in a specified partition.
@@ -311,6 +401,7 @@ namespace Streamstone
         /// <param name="partition">The partition.</param>
         /// <param name="startVersion">The start version.</param>
         /// <param name="sliceSize">Size of the slice.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>
         ///     The promise, that wil eventually return the slice of the stream, 
         ///     which contains events that has been read; or will fail with exception
@@ -328,9 +419,10 @@ namespace Streamstone
         ///     If there is no stream in a given partition
         /// </exception>
         public static Task<StreamSlice<T>> ReadAsync<T>(
-            Partition partition, 
-            int startVersion = 1, 
-            int sliceSize = DefaultSliceSize) 
+            Partition partition,
+            int startVersion = 1,
+            int sliceSize = DefaultSliceSize,
+            CancellationToken cancellationToken = default)
             where T : class, new()
         {
             Requires.NotNull(partition, nameof(partition));
@@ -338,7 +430,7 @@ namespace Streamstone
             Requires.GreaterThanOrEqualToOne(sliceSize, nameof(sliceSize));
 
             return new ReadOperation<T>(partition, startVersion, sliceSize)
-                .ExecuteAsync(BuildEntity<T>());
+                .ExecuteAsync(BuildEntity<T>(), cancellationToken);
         }
 
         /// <summary>
@@ -347,6 +439,7 @@ namespace Streamstone
         /// <param name="partition">The partition.</param>
         /// <param name="startVersion">The start version.</param>
         /// <param name="sliceSize">Size of the slice.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>
         ///     The promise, that wil eventually return the slice of the stream, 
         ///     which contains events that has been read; or will fail with exception
@@ -366,20 +459,23 @@ namespace Streamstone
         public static Task<StreamSlice<EventProperties>> ReadAsync(
             Partition partition,
             int startVersion = 1,
-            int sliceSize = DefaultSliceSize)
+            int sliceSize = DefaultSliceSize,
+            CancellationToken cancellationToken = default)
         {
             Requires.NotNull(partition, nameof(partition));
             Requires.GreaterThanOrEqualToOne(startVersion, nameof(startVersion));
             Requires.GreaterThanOrEqualToOne(sliceSize, nameof(sliceSize));
 
             return new ReadOperation<EventProperties>(partition, startVersion, sliceSize)
-                .ExecuteAsync(BuildEventProperties);
+                .ExecuteAsync(BuildEventProperties, cancellationToken);
         }
 
-        static Func<DynamicTableEntity, T> BuildEntity<T>() where T : class, new()
+        private static Func<DynamicTableEntity, T> BuildEntity<T>() where T : class, new()
         {
             if (typeof(T) == typeof(DynamicTableEntity))
+            {
                 return e => e as T;
+            }
 
             return e =>
             {
@@ -400,7 +496,7 @@ namespace Streamstone
             };
         }
 
-        static EventProperties BuildEventProperties(DynamicTableEntity e)
+        private static EventProperties BuildEventProperties(DynamicTableEntity e)
         {
             return EventProperties.ReadEntity(e.Properties);
         }
