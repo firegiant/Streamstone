@@ -2,9 +2,8 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <StartupObject>Example.Program</StartupObject>
-    <TargetFramework>$(ConsoleProjectTargetFramework)</TargetFramework>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

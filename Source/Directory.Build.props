@@ -1,17 +1,30 @@
 <Project>
+  <!-- Set output folder for created NuGet packages -->
   <PropertyGroup>
-    <_ParentDirectoryBuildPropsPath Condition="'$(_DirectoryBuildPropsFile)' != ''">$([System.IO.Path]::Combine('..', '$(_DirectoryBuildPropsFile)'))</_ParentDirectoryBuildPropsPath>
-  </PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <EnableSourceLink Condition=" '$(NCrunch)' == '1' ">false</EnableSourceLink>
 
-  <Import Project="$(_ParentDirectoryBuildPropsPath)" Condition="Exists('$(_ParentDirectoryBuildPropsPath)')"/>
+    <ProjectName Condition=" '$(ProjectName)' == '' ">$(MSBuildProjectName)</ProjectName>
+    <BuildFolder>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\Build\))</BuildFolder>
+    <BaseIntermediateOutputPath>$(BuildFolder)obj\$(ProjectName)\</BaseIntermediateOutputPath>
+    <OutputPath>$(BuildFolder)$(Configuration)\</OutputPath>
+
+    <PackageOutputPath Condition=" '$(PackageOutputPath)'=='' ">$(BuildFolder)Artifacts\$(Configuration)</PackageOutputPath>
+  </PropertyGroup>
 
   <PropertyGroup>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
-  <!-- Configure source link: https://github.com/ctaggart/SourceLink -->
+  <!-- Set common properties regarding assembly information and nuget packages -->
   <PropertyGroup>
-    <SourceLinkCreate>false</SourceLinkCreate>
-    <SourceLinkOriginUrl>$(RepositoryUrl)</SourceLinkOriginUrl>
+    <Authors>Yevhen Bobrov,FireGiant</Authors>
+    <Product>Streamstone (FireGiant)</Product>
+    <Copyright>since 2016 © Yevhen Bobrov. All rights reserved.</Copyright>
+    <PackageLicenseUrl>http://github.com/yevhen/Streamstone/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>http://github.com/yevhen/Streamstone</PackageProjectUrl>
+    <PackageIconUrl>https://github.com/yevhen/Streamstone/raw/master/Logo.png</PackageIconUrl>
+    <PackageTags>event store eventstore eventsourcing event-sourcing CQRS azure table storage stream</PackageTags>
+    <PackageReleaseNotes></PackageReleaseNotes>
   </PropertyGroup>
 </Project>

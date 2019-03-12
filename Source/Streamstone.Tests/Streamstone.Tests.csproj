@@ -1,15 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>$(TestProjectTargetFramework)</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
     <RootNamespace>Streamstone</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ExpectedObjects" Version="$(ExpectedObjectsVersion)" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
-    <PackageReference Include="NUnit" Version="$(NUnitVersion)" />
-    <PackageReference Include="NUnit3TestAdapter" Version="$(NUnit3TestAdapterVersion)" />
+    <PackageReference Include="ExpectedObjects" Version="2.3.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.7.2" />
+    <PackageReference Include="NUnit" Version="3.10.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.10.0" />
   </ItemGroup>
 
   <ItemGroup>

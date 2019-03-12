@@ -1,0 +1,12 @@
+{
+  "version": "2.2",
+  "cloudBuild": {
+    "setVersionVariables": true,
+    "buildNumber": {
+      "enabled": true
+    },
+  "publicReleaseRefSpec": [
+    "^refs/heads/master$"
+    ]
+  }
+}
