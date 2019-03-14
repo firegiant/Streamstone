@@ -24,7 +24,8 @@ namespace Streamstone
             Version = @event.Version;   
         }
 
-        public int Version                  { get; set; }
+        public long Version                 { get; set; }
+
         public EventProperties Properties   { get; set; }
 
         public override void ReadEntity(IDictionary<string, EntityProperty> properties, OperationContext operationContext)

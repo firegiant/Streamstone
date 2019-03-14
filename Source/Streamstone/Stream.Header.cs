@@ -38,7 +38,7 @@ namespace Streamstone
         /// <exception cref="ArgumentException">
         ///     If <paramref name="version"/> is less than <c>0</c>
         /// </exception>
-        public static Stream From(Partition partition, string etag, int version, StreamProperties properties = null)
+        public static Stream From(Partition partition, string etag, long version, StreamProperties properties = null)
         {
             Requires.NotNull(partition, nameof(partition));
             Requires.NotNullOrEmpty(etag, nameof(etag));
@@ -65,7 +65,7 @@ namespace Streamstone
         /// <summary>
         /// The version of the stream. Sequential, monotonically increasing, no gaps.
         /// </summary>
-        public readonly int Version;
+        public readonly long Version;
 
         /// <summary>
         /// Constructs a new <see cref="Stream"/> instance which doesn't have any additional properties.
@@ -104,7 +104,7 @@ namespace Streamstone
             Properties = properties;
         }
 
-        internal Stream(Partition partition, string etag, int version, StreamProperties properties)
+        internal Stream(Partition partition, string etag, long version, StreamProperties properties)
         {
             Partition = partition;
             ETag = etag;

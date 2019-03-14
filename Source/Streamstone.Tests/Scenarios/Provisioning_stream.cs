@@ -44,7 +44,7 @@ namespace Streamstone.Scenarios
             var expectedEntity = new
             {
                 RowKey = Api.StreamRowKey,
-                Version = 0
+                Version = 0L
             };
 
             expectedEntity.ToExpectedObject().ShouldMatch(entity);
@@ -75,7 +75,7 @@ namespace Streamstone.Scenarios
             {
                 RowKey = Api.StreamRowKey,
                 Properties = StreamProperties.From(properties),
-                Version = 0
+                Version = 0L
             };
 
             expectedEntity.ToExpectedObject().ShouldMatch(entity);

@@ -420,8 +420,8 @@ namespace Streamstone
         /// </exception>
         public static Task<StreamSlice<T>> ReadAsync<T>(
             Partition partition,
-            int startVersion = 1,
-            int sliceSize = DefaultSliceSize,
+            long startVersion = 1,
+            long sliceSize = DefaultSliceSize,
             CancellationToken cancellationToken = default)
             where T : class, new()
         {
@@ -458,8 +458,8 @@ namespace Streamstone
         /// </exception>
         public static Task<StreamSlice<EventProperties>> ReadAsync(
             Partition partition,
-            int startVersion = 1,
-            int sliceSize = DefaultSliceSize,
+            long startVersion = 1,
+            long sliceSize = DefaultSliceSize,
             CancellationToken cancellationToken = default)
         {
             Requires.NotNull(partition, nameof(partition));

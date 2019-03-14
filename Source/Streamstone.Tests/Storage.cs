@@ -108,7 +108,7 @@ namespace Streamstone
 
         public static void InsertEventEntities(this Partition partition, params string[] ids)
         {
-            for (int i = 0; i < ids.Length; i++)
+            for (long i = 0; i < ids.Length; i++)
             {
                 var e = new EventEntity
                 {

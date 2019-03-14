@@ -129,7 +129,7 @@ namespace Streamstone
             Partition = partition;
         }
 
-        internal static Exception EventVersionExists(Partition partition, int version)
+        internal static Exception EventVersionExists(Partition partition, long version)
         {
             return new ConcurrencyConflictException(partition, string.Format("Event with version '{0}' is already exists", version));            
         }

@@ -81,8 +81,8 @@ namespace Streamstone
         }
 
         internal string StreamRowKey() => string.Format("{0}{1}", RowKeyPrefix, StreamEntity.FixedRowKey);
-        internal string EventVersionRowKey(int version) => string.Format("{0}{1}{2:d10}", RowKeyPrefix, EventEntity.RowKeyPrefix, version);
         internal string EventIdRowKey(string id) => string.Format("{0}{1}{2}", RowKeyPrefix, EventIdEntity.RowKeyPrefix, id);
+        internal string EventVersionRowKey(long version) => String.Format("{0}{1}{2:d19}", RowKeyPrefix, EventEntity.RowKeyPrefix, version);
 
         /// <summary>
         /// Returns a string that represents the current object.

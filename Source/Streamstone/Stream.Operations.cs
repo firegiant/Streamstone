@@ -374,10 +374,10 @@ namespace Streamstone
             readonly Partition partition;
             readonly CloudTable table;
 
-            readonly int startVersion;
-            readonly int sliceSize;
+            readonly long startVersion;
+            readonly long sliceSize;
 
-            public ReadOperation(Partition partition, int startVersion, int sliceSize)
+            public ReadOperation(Partition partition, long startVersion, long sliceSize)
             {
                 this.partition = partition;
                 this.startVersion = startVersion;

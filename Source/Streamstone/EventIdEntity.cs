@@ -20,7 +20,7 @@ namespace Streamstone
             Version = @event.Version;
         }
 
-        public int Version
+        public long Version
         {
             get; set;
         }

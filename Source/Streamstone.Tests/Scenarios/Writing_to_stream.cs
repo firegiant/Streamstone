@@ -322,7 +322,7 @@ namespace Streamstone.Scenarios
             AssertStreamEntity(3, replaced);
         }
 
-        void AssertNewStream(StreamWriteResult actual, int version, object properties = null)
+        void AssertNewStream(StreamWriteResult actual, long version, object properties = null)
         {
             var newStream = actual.Stream;
             var newStreamEntity = partition.RetrieveStreamEntity();
@@ -331,7 +331,7 @@ namespace Streamstone.Scenarios
             expectedStream.ToExpectedObject().ShouldEqual(newStream);
         }
 
-        void AssertModifiedStream(Stream previous, StreamWriteResult actual, int version)
+        void AssertModifiedStream(Stream previous, StreamWriteResult actual, long version)
         {
             var actualStream = actual.Stream;
             var actualStreamEntity = partition.RetrieveStreamEntity();
@@ -342,7 +342,7 @@ namespace Streamstone.Scenarios
             expectedStream.ToExpectedObject().ShouldEqual(actualStream);
         }
 
-        Stream CreateStream(int version, string etag, object properties = null)
+        Stream CreateStream(long version, string etag, object properties = null)
         {
             var props = properties != null  
                 ? StreamProperties.From(properties) 
@@ -351,7 +351,7 @@ namespace Streamstone.Scenarios
             return new Stream(partition, etag, version, props);
         }
 
-        void AssertStreamEntity(int version = 0, object properties = null)
+        void AssertStreamEntity(long version = 0, object properties = null)
         {
             var newStreamEntity = partition.RetrieveStreamEntity();
 
@@ -367,13 +367,13 @@ namespace Streamstone.Scenarios
             expectedEntity.ToExpectedObject().ShouldMatch(newStreamEntity);
         }
 
-        void AssertRecordedEvent(int version, EventData source, RecordedEvent actual)
+        void AssertRecordedEvent(long version, EventData source, RecordedEvent actual)
         {
             var expected = source.Record(partition, version);
             expected.ToExpectedObject().ShouldMatch(actual);
         }
 
-        static void AssertEventEntity(int version, EventEntity actual)
+        static void AssertEventEntity(long version, EventEntity actual)
         {
             var expected = new
             {
@@ -389,7 +389,7 @@ namespace Streamstone.Scenarios
             expected.ToExpectedObject().ShouldMatch(actual);
         }
 
-        static void AssertEventIdEntity(string id, int version, EventIdEntity actual)
+        static void AssertEventIdEntity(string id, long version, EventIdEntity actual)
         {
             var expected = new
             {

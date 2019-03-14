@@ -16,7 +16,7 @@ namespace Streamstone
             Properties = StreamProperties.None;
         }
 
-        public StreamEntity(Partition partition, string etag, int version, StreamProperties properties)
+        public StreamEntity(Partition partition, string etag, long version, StreamProperties properties)
         {
             Partition = partition;
             PartitionKey = partition.PartitionKey;
@@ -26,7 +26,8 @@ namespace Streamstone
             Properties = properties;
         }
 
-        public int Version                  { get; set; }
+        public long Version                 { get; set; }
+
         public StreamProperties Properties  { get; set; }
 
         public override void ReadEntity(IDictionary<string, EntityProperty> properties, OperationContext operationContext)
@@ -50,7 +51,7 @@ namespace Streamstone
                 RowKey = entity.RowKey,
                 ETag = entity.ETag,
                 Timestamp = entity.Timestamp,
-                Version = (int)entity.Properties["Version"].PropertyAsObject,
+                Version = (long)entity.Properties["Version"].PropertyAsObject,
                 Properties = StreamProperties.From(entity)
             };
         }
