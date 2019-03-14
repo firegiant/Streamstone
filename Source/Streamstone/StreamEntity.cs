@@ -20,7 +20,7 @@ namespace Streamstone
         {
             Partition = partition;
             PartitionKey = partition.PartitionKey;
-            RowKey = partition.StreamRowKey();
+            RowKey = partition.StreamRowKey;
             ETag = etag;
             Version = version;
             Properties = properties;

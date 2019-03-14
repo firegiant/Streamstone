@@ -23,8 +23,8 @@ namespace Streamstone.Scenarios
             table = Storage.SetUp();
 
             partition = new Partition(table, "test");
-            virtual1  = new Partition(table, "test|123");
-            virtual2  = new Partition(table, "test", "456");
+            virtual1  = new Partition(table, "test", "item-123");
+            virtual2  = new Partition(table, "test", "item-456");
         }
 
         [Test]

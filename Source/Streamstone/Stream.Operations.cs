@@ -357,7 +357,7 @@ namespace Streamstone
             public async Task<StreamOpenResult> ExecuteAsync(CancellationToken cancellationToken) => 
                 Result(await table.ExecuteAsync(Prepare(), null, null, cancellationToken));
 
-            TableOperation Prepare() => TableOperation.Retrieve<StreamEntity>(partition.PartitionKey, partition.StreamRowKey());
+            TableOperation Prepare() => TableOperation.Retrieve<StreamEntity>(partition.PartitionKey, partition.StreamRowKey);
 
             StreamOpenResult Result(TableResult result)
             {
@@ -408,7 +408,7 @@ namespace Streamstone
                    TableQuery.GenerateFilterCondition(nameof(DynamicTableEntity.PartitionKey), QueryComparisons.Equal, partition.PartitionKey),
                    TableOperators.And,
                        TableQuery.CombineFilters(
-                           TableQuery.GenerateFilterCondition(nameof(DynamicTableEntity.RowKey), QueryComparisons.Equal, partition.StreamRowKey()),
+                           TableQuery.GenerateFilterCondition(nameof(DynamicTableEntity.RowKey), QueryComparisons.Equal, partition.StreamRowKey),
                            TableOperators.Or,
                            TableQuery.CombineFilters(
                                 TableQuery.GenerateFilterCondition(nameof(DynamicTableEntity.RowKey), QueryComparisons.GreaterThanOrEqual, rowKeyStart),
@@ -439,12 +439,9 @@ namespace Streamstone
 
             DynamicTableEntity FindStreamEntity(IEnumerable<DynamicTableEntity> entities)
             {
-                var result = entities.SingleOrDefault(x => x.RowKey == partition.StreamRowKey());
+                var result = entities.FirstOrDefault(x => x.RowKey == partition.StreamRowKey);
 
-                if (result == null)
-                    throw new StreamNotFoundException(partition);
-
-                return result;
+                return result ?? throw new StreamNotFoundException(partition);
             }
 
             Stream BuildStream(DynamicTableEntity entity) => From(partition, StreamEntity.From(entity));

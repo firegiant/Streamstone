@@ -11,7 +11,7 @@ namespace Streamstone
     /// </summary>
     public sealed class Partition
     {
-        static readonly string[] separator = {"|"};
+        static readonly char Separator = '|';
 
         /// <summary>
         /// The table in which this partition resides
@@ -34,26 +34,31 @@ namespace Streamstone
         public readonly string Key;
 
         /// <summary>
+        /// The stream row key for internal use.
+        /// </summary>
+        internal readonly string StreamRowKey;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="Partition"/> class.
         /// </summary>
         /// <param name="table">The cloud table.</param>
-        /// <param name="key">The full key.</param>
-        /// <remarks>Use "partitionkey|rowkeyprefix" key syntax to create virtual partition</remarks>
-        public Partition(CloudTable table, string key)
+        /// <param name="partitionKey">The partition's key.</param>
+        public Partition(CloudTable table, string partitionKey)
         {
             Requires.NotNull(table, nameof(table));
-            Requires.NotNullOrEmpty(key, nameof(key));
+            Requires.NotNullOrEmpty(partitionKey, nameof(partitionKey));
 
-            var parts = key.Split(separator, 2, 
-                StringSplitOptions.RemoveEmptyEntries);
+            if (partitionKey.Contains(Separator))
+            {
+                throw new ArgumentException("Partition key cannot contain virtual partition separator", nameof(partitionKey));
+            }
 
             Table = table;
-            
-            PartitionKey = parts[0];
-            RowKeyPrefix = parts.Length > 1 
-                            ? parts[1] + separator[0] 
-                            : "";
-            Key = key;
+
+            PartitionKey = partitionKey;
+            RowKeyPrefix = String.Empty;
+            Key = partitionKey;
+            StreamRowKey = String.Concat(RowKeyPrefix, StreamEntity.FixedRowKey);
         }
 
         /// <summary>
@@ -68,21 +73,23 @@ namespace Streamstone
             Requires.NotNullOrEmpty(partitionKey, nameof(partitionKey));
             Requires.NotNullOrEmpty(rowKeyPrefix, nameof(rowKeyPrefix));
 
-            if (partitionKey.Contains(separator[0]))
-                throw new ArgumentException(
-                    "Partition key cannot contain virtual partition separator", "partitionKey");
+            if (partitionKey.Contains(Separator))
+            {
+                throw new ArgumentException("Partition key cannot contain virtual partition separator", nameof(partitionKey));
+            }
 
             Table = table;
 
             PartitionKey = partitionKey;
-            RowKeyPrefix = rowKeyPrefix;
+            RowKeyPrefix = rowKeyPrefix + Separator;
 
-            Key = string.Format("{0}{1}{2}", partitionKey, separator[0], rowKeyPrefix);
+            Key = String.Concat(partitionKey, Separator, rowKeyPrefix);
+            StreamRowKey = String.Concat(RowKeyPrefix, StreamEntity.FixedRowKey);
         }
 
-        internal string StreamRowKey() => string.Format("{0}{1}", RowKeyPrefix, StreamEntity.FixedRowKey);
-        internal string EventIdRowKey(string id) => string.Format("{0}{1}{2}", RowKeyPrefix, EventIdEntity.RowKeyPrefix, id);
         internal string EventVersionRowKey(long version) => String.Format("{0}{1}{2:d19}", RowKeyPrefix, EventEntity.RowKeyPrefix, version);
+
+        internal string EventIdRowKey(string id) => String.Concat(RowKeyPrefix, EventIdEntity.RowKeyPrefix, id);
 
         /// <summary>
         /// Returns a string that represents the current object.
@@ -91,6 +98,6 @@ namespace Streamstone
         /// A string that represents the current object.
         /// </returns>
         /// <filterpriority>2</filterpriority>
-        public override string ToString() => string.Format("{0}.{1}", Table.Name, Key);
+        public override string ToString() => String.Concat(Table.Name, ".", Key);
     }
 }
